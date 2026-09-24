@@ -58,6 +58,7 @@ build/
 test/slorado*
 /slorado-*/
 /slorado-server
+/slorado-client
 
 #Allowed files
 !CMakeLists.txt

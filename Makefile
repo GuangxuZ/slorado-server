@@ -40,6 +40,7 @@ endif
 # change the tool name to what you want
 BINARY = slorado
 SERVER_BINARY = slorado-server
+CLIENT_BINARY = slorado-client
 
 OBJ = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/basecaller_main.o \
@@ -61,6 +62,7 @@ OBJ = $(BUILD_DIR)/main.o \
 
 # add more objects here if needed
 SERVER_OBJ = $(BUILD_DIR)/server_main.o \
+	 $(BUILD_DIR)/socket.o \
       $(BUILD_DIR)/slorado.o \
       $(BUILD_DIR)/thread.o \
 	  $(BUILD_DIR)/misc.o \
@@ -76,6 +78,10 @@ SERVER_OBJ = $(BUILD_DIR)/server_main.o \
 	  $(BUILD_DIR)/ModBaseModel.o \
 	  $(BUILD_DIR)/model_config.o \
 	  $(BUILD_DIR)/toml.o \
+
+CLIENT_OBJ = $(BUILD_DIR)/client_main.o \
+	  $(BUILD_DIR)/socket.o
+
 
 VERSION = `git describe --tags`
 
@@ -123,6 +129,10 @@ $(BUILD_DIR)/basecaller_main.o: src/basecaller_main.cpp
 
 $(SERVER_BINARY): $(SERVER_OBJ) slow5lib/lib/libslow5.a openfish/lib/libopenfish.a
 	$(CXX) $(CFLAGS) $(SERVER_OBJ) slow5lib/lib/libslow5.a openfish/lib/libopenfish.a $(LDFLAGS) -o $@
+
+
+$(CLIENT_BINARY): $(CLIENT_OBJ) slow5lib/lib/libslow5.a
+	$(CXX) $(CFLAGS) $(CLIENT_OBJ) slow5lib/lib/libslow5.a $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/slorado.o: src/slorado.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(DEPFLAGS) $< -c -o $@
@@ -177,9 +187,14 @@ openfish/lib/libopenfish.a:
 slow5lib/lib/libslow5.a:
 	$(MAKE) -C slow5lib zstd=$(zstd) no_simd=$(no_simd) zstd_local=$(zstd_local) lib/libslow5.a
 
-$(BUILD_DIR)/server_main.o: src-server/server_main.cpp
+$(BUILD_DIR)/server_main.o: src-server/server_main.cpp src-server/socket.h
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(DEPFLAGS) $< -c -o $@
 
+$(BUILD_DIR)/client_main.o: src-server/client_main.cpp src-server/socket.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(DEPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/socket.o: src-server/socket.cpp src-server/socket.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(DEPFLAGS) $< -c -o $@
 
 clean:
 	rm -rf $(BINARY) $(SERVER_BINARY) $(BUILD_DIR)/*.o $(BUILD_DIR)/*.d
